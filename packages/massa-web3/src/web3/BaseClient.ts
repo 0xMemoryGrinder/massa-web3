@@ -22,6 +22,13 @@ export const requestHeaders = {
   'Access-Control-Allow-Methods': 'GET,PUT,POST,DELETE,PATCH,OPTIONS',
 } as AxiosRequestHeaders
 
+export const fetchRequestHeaders: [string, string][] = [
+  ['Accept', 'application/json,text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'],
+  ['Access-Control-Allow-Origin', '*'],
+  ['Access-Control-Allow-Credentials', "true"],
+  ['Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,PATCH,OPTIONS'],
+]
+
 export const PERIOD_OFFSET = 5
 
 /**
@@ -182,7 +189,8 @@ export class BaseClient {
     resource: JSON_RPC_REQUEST_METHOD,
     params: object
   ): Promise<JsonRpcResponseData<T>> {
-    let resp: AxiosResponse<JsonRpcResponseData<T>> = null
+    //let resp: Response<JsonRpcResponseData<T>> = null
+    let resp: Response = null
 
     const body = {
       jsonrpc: '2.0',
@@ -192,11 +200,16 @@ export class BaseClient {
     }
 
     try {
-      resp = await axios.post(
+      resp = await fetch(this.getProviderForRpcMethod(resource).url, {
+        headers: fetchRequestHeaders,
+        body: JSON.stringify(body),
+        method: 'POST',
+      })
+      /*resp = await axios.post(
         this.getProviderForRpcMethod(resource).url,
         body,
         requestHeaders
-      )
+      )*/
     } catch (ex) {
       return {
         isError: true,
@@ -205,7 +218,8 @@ export class BaseClient {
       } as JsonRpcResponseData<T>
     }
 
-    const responseData: JsonRpcResponseData<T> = resp.data
+    //const responseData: JsonRpcResponseData<T> = resp.data
+    const responseData: JsonRpcResponseData<T> = await resp.json()
 
     if (responseData.error) {
       return {
